@@ -184,7 +184,7 @@ public:
     bool remove_place(PlaceID id);
 
     // Estimate of performance: O(n^2), but perftest's result is theta(1)
-    // Short rationale for estimate: there are one while-loop inside anoter while-loop. it depends what kind of data we have in worst case first one's and second one's while-loop size will be n-1, if data's size is n.
+    // Short rationale for estimate: there are one while-loop inside anoter while-loop. it depends what kind of data we have. In worst case first one's and second one's while-loop size will be n-1, if data's size is n.
     // but our "return" will interupt it, so it will never be (n-1)^2 (except they do not have the common area)
     AreaID common_area_of_subareas(AreaID id1, AreaID id2);
 
