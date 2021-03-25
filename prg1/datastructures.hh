@@ -9,10 +9,15 @@
 #include <utility>
 #include <limits>
 #include <functional>
+#include <unordered_map>
+#include <algorithm>
+#include <memory>
+
+using  namespace std;
 
 // Types for IDs
-using PlaceID = long int;
-using AreaID = long int;
+using PlaceID = long long int;
+using AreaID = long long int;
 using Name = std::string;
 using WayID = std::string;
 
@@ -183,7 +188,32 @@ public:
     AreaID common_area_of_subareas(AreaID id1, AreaID id2);
 
 private:
-    // Add stuff needed for your class implementation here
+    //Place
+    struct Place{
+        Name name_;
+        PlaceType type_;
+        Coord xy_;
+    };
+    unordered_map<PlaceID,Place> placeUnOrMap_;
+    typedef unordered_map<PlaceID,Place>::iterator placeIter ;
+
+    //Area
+    struct Area{
+        AreaID area_ID_;
+        Name name_;
+        vector<Coord> coords_;
+        Area * parent_=nullptr;//Area* parent
+        vector<Area*> subArea_;
+    };
+    unordered_map<AreaID,Area> areaUnOrMap_;
+    typedef unordered_map<AreaID,Area>::iterator areaIter ;
+
+    void PRE_WALK_SUB(Area* recentArea, vector<AreaID>& ID);
+    bool aShorterB(const PlaceID& a,const PlaceID& b,const Coord& xy);
+    void sort3element(vector<PlaceID>& placeVec,const Coord& xy);
+    //lock
+    bool creation_finnished_=false;
+
 
 };
 
