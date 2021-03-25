@@ -40,7 +40,7 @@ Datastructures::~Datastructures()
 
 //********
 //return size
-//O(n)
+//O(1)
 int Datastructures::place_count()
 {
     return placeUnOrMap_.size();
@@ -85,14 +85,13 @@ bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coo
         newPlace.type_=type;
         newPlace.xy_=xy;
         placeUnOrMap_.insert({id,newPlace});//worst O(n), average thete(1)
-        //qDebug()<<placeUnOrMap_.size();
         return true;
     }
     return false;
 }
 
 //********
-//Average case: O(1),Worst case: O(n)
+//Average case: theta(1),Worst case: O(n)
 //return {Name,PlaceType}
 //return {NO_NAME,NO_TYPE} if we do not find it
 std::pair<Name, PlaceType> Datastructures::get_place_name_type(PlaceID id)
@@ -140,22 +139,22 @@ bool Datastructures::add_area(AreaID id, const Name &name, std::vector<Coord> co
 }
 
 //********
-//O(n)
+//in average theta(1),Worst case: O(n)
 Name Datastructures::get_area_name(AreaID id)
 {
     areaIter iter= areaUnOrMap_.find(id);
-    if(iter!=areaUnOrMap_.end()){//O(n)
+    if(iter!=areaUnOrMap_.end()){
         return iter->second.name_;
     }
     return NO_NAME;
 }
 
 //********
-//O(n)
+//in average theta(1),Worst case: O(n)
 std::vector<Coord> Datastructures::get_area_coords(AreaID id)
 {
     areaIter iter= areaUnOrMap_.find(id);
-    if(iter!=areaUnOrMap_.end()){//O(n)
+    if(iter!=areaUnOrMap_.end()){
         return iter->second.coords_;
     }
     return {NO_COORD};
@@ -203,7 +202,7 @@ std::vector<PlaceID> Datastructures::places_coord_order()
 }
 
 //********
-// O(n*m), but in average actually is theta(1)
+// O(n*m)
 std::vector<PlaceID> Datastructures::find_places_name(Name const& name)
 {
     vector<PlaceID> ID;
@@ -376,7 +375,7 @@ std::vector<PlaceID> Datastructures::places_closest_to(Coord xy, PlaceType type)
 }
 
 //********
-//O(n)
+//theta(1),O(n)
 bool Datastructures::remove_place(PlaceID id)
 {
     return placeUnOrMap_.erase(id);
@@ -410,6 +409,7 @@ std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
     }
     return {NO_AREA};
 }
+
 //returns 2 id's common area
 //returns NO_AREA when id1, id2 not find or no common area
 AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
