@@ -209,8 +209,19 @@ private:
     unordered_map<AreaID,Area> areaUnOrMap_;
     typedef unordered_map<AreaID,Area>::iterator areaIter ;
 
+    // Helping "all_subareas_in_area". Pre-order-tree-walk through subarea and add them to "vector<AreaID>:
+    // Depth First Traversal is O(n + m), where n is the number of nodes, and m is the number of edges.
     void PRE_WALK_SUB(Area* recentArea, vector<AreaID>& ID);
+
+    //Helping "places_closest_to"and "sort3element" compare a's and b's distance from coord xy
+    //return true id a's distance from xy is shorter than b
+    //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
+    //O(1)
     bool aShorterB(const PlaceID& a,const PlaceID& b,const Coord& xy);
+
+    //Helping "places_closest_to", sorting 3(or less than 3) elements in the "vector<PlaceID>"
+    //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
+    //O(nlog(n)). But actually it is theta(1) because n is constant 0-3. So this one will not effect "places_closest_to"'s complexity
     void sort3element(vector<PlaceID>& placeVec,const Coord& xy);
     //lock
     bool creation_finnished_=false;
