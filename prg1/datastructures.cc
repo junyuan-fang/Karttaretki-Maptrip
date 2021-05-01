@@ -76,11 +76,12 @@ std::vector<PlaceID> Datastructures::all_places()
 //worst O(n), average thete(1)
 bool Datastructures::add_place(PlaceID id, const Name& name, PlaceType type, Coord xy)
 {
-    if(creation_finnished_){
-        return false;
-    }
+//    if(creation_finnished_){
+//        return false;
+//    }
     if(placeUnOrMap_.find(id)==placeUnOrMap_.end()){
         Place newPlace;
+        newPlace.place_ID_=id;
         newPlace.name_=name;
         newPlace.type_=type;
         newPlace.xy_=xy;
@@ -122,9 +123,9 @@ Coord Datastructures::get_place_coord(PlaceID id)
 //O(n)
 bool Datastructures::add_area(AreaID id, const Name &name, std::vector<Coord> coords)
 {
-    if(creation_finnished_){
-        return false;
-    }
+//    if(creation_finnished_){
+//        return false;
+//    }
     if(areaUnOrMap_.find(id)==areaUnOrMap_.end()){//Average case: O(1),Worst case: O(n)
         Area newArea;
         newArea.area_ID_=id;
@@ -171,11 +172,24 @@ void Datastructures::creation_finished()
 //Average cost: O(n log(n))
 std::vector<PlaceID> Datastructures::places_alphabetically()
 {
-    vector<PlaceID> ID= all_places();  //O(n)
-    sort(ID.begin(), ID.end(), [this](PlaceID a, PlaceID b)   //this
-        {return placeUnOrMap_.find(a)->second.name_
+//    vector<PlaceID> ID= all_places();  //O(n)
+//    sort(ID.begin(), ID.end(), [this](PlaceID a, PlaceID b)   //this
+//        {return placeUnOrMap_.find(a)->second.name_
+//                <
+//                placeUnOrMap_.find(b)->second.name_;});//sort O(nlog(n))
+    vector<Place*> placeVecPtr;
+    for(placeIter iter_map=placeUnOrMap_.begin();iter_map!=placeUnOrMap_.end();iter_map++){//O(n)
+        placeVecPtr.push_back(&iter_map->second);
+    }
+
+    sort(placeVecPtr.begin(), placeVecPtr.end(), [](Place* a, Place* b)   //this
+        {return a->name_
                 <
-                placeUnOrMap_.find(b)->second.name_;});//sort O(nlog(n))
+                b->name_;});//sort O(nlog(n))
+    vector<PlaceID> ID;
+    for(Place* a:placeVecPtr){//O(n)
+        ID.push_back(a->place_ID_);
+    }
     return ID;
 }
 
@@ -183,12 +197,16 @@ std::vector<PlaceID> Datastructures::places_alphabetically()
 //********
 //Average cost: O(n log(n))
 //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
+//perftest places_coord_order;random_add 20 500 10;30;100;300;1000;3000;10000;30000;100000;300000
 std::vector<PlaceID> Datastructures::places_coord_order()
 {
-    vector<PlaceID> ID=all_places();
-    sort(ID.begin(),ID.end(),[this](PlaceID a, PlaceID b)//O(nlog(n))
-    {   Coord a_coord=placeUnOrMap_.find(a)->second.xy_; //theta(1)
-        Coord b_coord=placeUnOrMap_.find(b)->second.xy_;
+    vector<Place*> placeVecPtr;
+    for(placeIter iter_map=placeUnOrMap_.begin();iter_map!=placeUnOrMap_.end();iter_map++){//O(n)
+        placeVecPtr.push_back(&iter_map->second);
+    }
+    sort(placeVecPtr.begin(),placeVecPtr.end(),[](Place* a, Place* b)//O(nlog(n))
+    {   Coord a_coord=a->xy_; //theta(1)
+        Coord b_coord=b->xy_;
         double a_coord_abs= sqrt(pow(a_coord.x,2)+pow(a_coord.y,2));
         double b_coord_abs= sqrt(pow(b_coord.x,2)+pow(b_coord.y,2));
         if(a_coord_abs<b_coord_abs){
@@ -198,6 +216,10 @@ std::vector<PlaceID> Datastructures::places_coord_order()
             return false;
         }
         return a_coord<b_coord;});//sort O(nlog(n))
+    vector<PlaceID> ID;
+    for(Place* a:placeVecPtr){//O(n)
+        ID.push_back(a->place_ID_);
+    }
     return ID;
 }
 
@@ -271,11 +293,14 @@ std::vector<AreaID> Datastructures::all_areas()
 //O(n), theta(1)
 bool Datastructures::add_subarea_to_area(AreaID id, AreaID parentid)
 {
-    if(creation_finnished_){
-        return false;
-    }
+//    if(creation_finnished_){
+//        return false;
+//    }
     areaIter id_iter=areaUnOrMap_.find(id);
     areaIter parent_iter=areaUnOrMap_.find(parentid);
+    if(id_iter==areaUnOrMap_.end()||parent_iter==areaUnOrMap_.end()){
+        return false;
+    }
     if(id_iter!=areaUnOrMap_.end() && id_iter->second.parent_==nullptr){//O(n), theta(1)
         //mark id's parent
         Area &parentArea= parent_iter->second;//quote
@@ -312,10 +337,10 @@ std::vector<AreaID> Datastructures::subarea_in_areas(AreaID id)
 //return true id a's distance from xy is shorter than b
 //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
 //O(1)
-bool Datastructures::aShorterB(const PlaceID &a, const PlaceID &b, const Coord &xy)
+bool Datastructures::aShorterB(const Place &a, const Place &b, const Coord &xy)
 {
-    Coord xyA=placeUnOrMap_.find(a)->second.xy_;//theta(1)
-    Coord xyB=placeUnOrMap_.find(b)->second.xy_;
+    Coord xyA=a.xy_;//theta(1)
+    Coord xyB=b.xy_;
     double distanceA=sqrt(pow(xyA.x-xy.x,2)+pow(xyA.y-xy.y,2));
     double distanceB=sqrt(pow(xyB.x-xy.x,2)+pow(xyB.y-xy.y,2));
     if(distanceA<distanceB){
@@ -330,10 +355,10 @@ bool Datastructures::aShorterB(const PlaceID &a, const PlaceID &b, const Coord &
 //helping "places_closest_to"
 //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
 //O(nlog(n))
-void Datastructures::sort3element(vector<PlaceID>& placeVec,const Coord& xy)
+void Datastructures::sort3element(vector<Place*>& placeVec,const Coord& xy)
 {
     sort(placeVec.begin(),placeVec.end(),
-         [this,&xy](const PlaceID a,const PlaceID b)
+         [this,&xy](const Place* a,const Place* b)
     {   /*Coord xyA=placeUnOrMap_.find(a)->second.xy_;//theta(1)
         Coord xyB=placeUnOrMap_.find(b)->second.xy_;
         double distanceA=sqrt(pow(xyA.x-xy.x,2)+pow(xyA.y-xy.y,2));
@@ -345,33 +370,38 @@ void Datastructures::sort3element(vector<PlaceID>& placeVec,const Coord& xy)
             return false;
         }
         return xyA<xyB;*/
-        return aShorterB(a,b,xy);
+        return aShorterB(*a,*b,xy);
     }   );
 }
 
 //********
 //returns Coord xy's closest 3 places(max 3). And places are in order
 //O(n)
+//perftest places_closest_to;random_add 20 500 10;30;100;300;1000;3000;10000;30000;100000;300000
 std::vector<PlaceID> Datastructures::places_closest_to(Coord xy, PlaceType type)
 {
-    vector<PlaceID> ID;
+    vector<Place*> ID;
     for(placeIter iter=placeUnOrMap_.begin();iter!=placeUnOrMap_.end();iter++){
         PlaceType recentType=iter->second.type_;
         if (recentType==type||type==PlaceType::NO_TYPE){
             if(ID.size()<3 ){
                 //add ID to vec
-                ID.push_back(iter->first);
+                ID.push_back(&iter->second);
                 sort3element(ID,xy);
             }
             //compare iter.first with the largest +adjust(swap)
-            else if(aShorterB(ID.back(),iter->first,xy)==false){
-                ID.back()=iter->first;
+            else if(aShorterB(*ID.back(),iter->second,xy)==false){
+                ID.back()=&iter->second;
             }
             //sort
             sort3element(ID,xy);//should be O(nlogn), but n is constant 3 so O(1)
         }
     }
-    return ID;
+    vector<PlaceID> id;
+    for(Place* x:ID){
+        id.push_back(x->place_ID_);
+    }
+    return id;
 }
 
 //********

@@ -191,6 +191,7 @@ public:
 private:
     //Place
     struct Place{
+        PlaceID place_ID_;
         Name name_;
         PlaceType type_;
         Coord xy_;
@@ -217,12 +218,12 @@ private:
     //return true id a's distance from xy is shorter than b
     //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
     //O(1)
-    bool aShorterB(const PlaceID& a,const PlaceID& b,const Coord& xy);
+    bool aShorterB(const Place &a,const Place & b,const Coord& xy);
 
     //Helping "places_closest_to", sorting 3(or less than 3) elements in the "vector<PlaceID>"
     //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
     //O(nlog(n)). But actually it is theta(1) because n is constant 0-3. So this one will not effect "places_closest_to"'s complexity
-    void sort3element(vector<PlaceID>& placeVec,const Coord& xy);
+    void sort3element(vector<Place*>& placeVec,const Coord& xy);
     //lock
     bool creation_finnished_=false;
 
