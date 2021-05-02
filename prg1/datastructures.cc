@@ -424,6 +424,7 @@ void Datastructures::PRE_WALK_SUB(Area* recentArea, vector<AreaID>& ID){
     }
 }
 
+
 //********
 //Depth First Traversal is O(n + m), where n is the number of nodes, and m is the number of edges.
 //pre-order-tree-walk
@@ -440,25 +441,68 @@ std::vector<AreaID> Datastructures::all_subareas_in_area(AreaID id)
     return {NO_AREA};
 }
 
+void Datastructures::PRE_WALK_COMMON(bool& flag,Datastructures::Area* recentArea, const AreaID id1, const AreaID id2, AreaID &might_common_areaID, AreaID &common_areaID)
+{
+    if(recentArea->area_ID_==id2){
+        common_areaID=might_common_areaID;
+        return;
+    }
+    if(recentArea->subArea_.size()==0){
+        return;
+    }
+    if(recentArea->area_ID_==id1){
+        flag=true;
+    }
+    if(recentArea->parent_==nullptr){
+
+    }
+    else if (recentArea->area_ID_==recentArea->parent_->subArea_.back()->area_ID_ &&recentArea->subArea_.size()>1 && !flag){
+        might_common_areaID=recentArea->area_ID_;
+    }
+//    QString a= QString::fromStdString(recentArea->name_);
+//    qDebug()<<a<<Qt::endl;
+
+    for(Area* x:recentArea->subArea_){
+        PRE_WALK_COMMON(flag ,x, id1, id2, might_common_areaID, common_areaID);
+    }
+}
+
 //returns 2 id's common area
 //returns NO_AREA when id1, id2 not find or no common area
+//perftest places_closest_to;random_add 20 500 10;30;100;300;1000;3000;10000;30000;100000;300000
 AreaID Datastructures::common_area_of_subareas(AreaID id1, AreaID id2)
 {
+//    areaIter id1Iter=areaUnOrMap_.find(id1);
+//    areaIter id2Iter=areaUnOrMap_.find(id2);
+//    Area* id1Ptr=&id1Iter->second;
+//    if(id1Iter!=areaUnOrMap_.end()||id2Iter!=areaUnOrMap_.end()){
+//        while(id1Ptr->parent_!=nullptr){
+//            Area* id2Ptr=&id2Iter->second;
+//            while(id2Ptr->parent_!=nullptr){
+//                if(id2Ptr->parent_->area_ID_==id1Ptr->parent_->area_ID_){
+//                    return id2Ptr->parent_->area_ID_;
+//                }
+//                id2Ptr=id2Ptr->parent_;
+//            }
+//            id1Ptr=id1Ptr->parent_;
+//        }
+//    }
+//    return NO_AREA;
     areaIter id1Iter=areaUnOrMap_.find(id1);
     areaIter id2Iter=areaUnOrMap_.find(id2);
-    Area* id1Ptr=&id1Iter->second;
-    if(id1Iter!=areaUnOrMap_.end()||id2Iter!=areaUnOrMap_.end()){
-        while(id1Ptr->parent_!=nullptr){
-            Area* id2Ptr=&id2Iter->second;
-            while(id2Ptr->parent_!=nullptr){
-                if(id2Ptr->parent_->area_ID_==id1Ptr->parent_->area_ID_){
-                    return id2Ptr->parent_->area_ID_;
-                }
-                id2Ptr=id2Ptr->parent_;
-            }
-            id1Ptr=id1Ptr->parent_;
-        }
+    if(id1Iter==areaUnOrMap_.end()||id2Iter==areaUnOrMap_.end()){
+        return NO_AREA;
     }
-    return NO_AREA;
+    Area* id1Top=&id1Iter->second;
+    while(id1Top->parent_!=nullptr){
+        id1Top=id1Top->parent_;
+    }
+    //find id2 by id1Top and return the area
+    AreaID might_common_areaID= id1Top->area_ID_;
+    AreaID common_areaID=NO_AREA;
+    bool flag=false;
+    PRE_WALK_COMMON(flag,id1Top, id1, id2,might_common_areaID, common_areaID);
+//    qDebug()<<"done"<<Qt::endl;
+    return common_areaID;
 }
 

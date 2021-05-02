@@ -183,7 +183,7 @@ public:
     // Short rationale for estimate:because we only used unordered_map's erase()
     bool remove_place(PlaceID id);
 
-    // Estimate of performance: O(n^2), but perftest's result is theta(1)
+    // Estimate of performance: O(n), but perftest's result is theta(1)
     // Short rationale for estimate: there are one while-loop inside anoter while-loop. it depends what kind of data we have. In worst case first one's and second one's while-loop size will be n-1, if data's size is n.
     // but our "return" will interupt it, so it will never be (n-1)^2 (except they do not have the common area)
     AreaID common_area_of_subareas(AreaID id1, AreaID id2);
@@ -214,6 +214,8 @@ private:
     // Depth First Traversal is O(n + m), where n is the number of nodes, and m is the number of edges.
     void PRE_WALK_SUB(Area* recentArea, vector<AreaID>& ID);
 
+    void PRE_WALK_COMMON(bool& flag,Area* recentArea, const AreaID id1, const AreaID id2, AreaID& might_common_areaID, AreaID &common_areaID);
+
     //Helping "places_closest_to"and "sort3element" compare a's and b's distance from coord xy
     //return true id a's distance from xy is shorter than b
     //Coord's "<" was reloaded(from "datastructure.hh" in rows 64-71)
@@ -229,5 +231,6 @@ private:
 
 
 };
+
 
 #endif // DATASTRUCTURES_HH
