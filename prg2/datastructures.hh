@@ -285,15 +285,19 @@ private:    //Place
         vector<WayID> wayID;
         bool IsCrossroad=false;//can be empty
         //vector<tuple<Coord,WayID,Distance> > AdjCrossRoad;
-        Colour color=WHITE;
+        Colour colour=WHITE;
         CoordData* from=nullptr;
-        Distance d=0;
+        WayID fromWay;
+        Distance d=-1;//infinity
     };
 
     unordered_map <WayID, vector<Coord>> wayIDUnordMap_;
     unordered_map<Coord, CoordData, CoordHash> coordUnordMap_;
 
-    int calWayDist(const vector<Coord> coords);
+    void clearCoorDataMarks();
+    Distance calWayDist(const WayID id);
+    CoordData coordTo(const CoordData coordfrom,WayID wayID);
+    void printPath(vector<std::tuple<Coord, WayID, Distance> >& path, const CoordData coordDataFrom, const CoordData coordDataTo);
 };
 
 #endif // DATASTRUCTURES_HH

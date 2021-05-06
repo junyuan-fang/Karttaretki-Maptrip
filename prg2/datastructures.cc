@@ -581,7 +581,7 @@ std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
 //            return {{NO_WAY, NO_COORD}};
 //        } never hapen, if coord is found from the coordUnorderMap_
         if(coordData.IsCrossroad==false){
-            return {{NO_WAY, NO_COORD}};
+            return {};
         }
         else{// if is crossroad.
             vector<pair<WayID,Coord>> queue;
@@ -600,7 +600,7 @@ std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
         }
     }
 
-    return {{NO_WAY, NO_COORD}};
+    return {};
 }
 //perftest way_coords 20 5000 10;30;100;300;1000;3000;10000;30000;100000;300000;1000000
 std::vector<Coord> Datastructures::get_way_coords(WayID id)
@@ -617,13 +617,102 @@ void Datastructures::clear_ways()
     coordUnordMap_.clear();
 }
 
-int Datastructures::calWayDist(const vector<Coord> coords)
+Distance Datastructures::calWayDist(const WayID id)
 {
-
+    vector<Coord> coords=wayIDUnordMap_.find(id)->second;
+    Distance dist=NO_DISTANCE;
+    for (unsigned int i=0; i<coords.size();i++){
+        //calculating distance
+        if(i==0){
+            dist=0;
+        }
+        else{
+            dist+=sqrt(pow((coords.at(i).x-coords.at(i-1).x),2)+pow((coords.at(i).y-coords.at(i-1).y),2));
+        }
+    }
+    return dist;
 }
+
+Datastructures::CoordData Datastructures::coordTo(const Datastructures::CoordData coordfrom, WayID wayID)
+{
+    CoordData coordTo;
+    vector<Coord> coordList=wayIDUnordMap_.find(wayID)->second;
+    Coord first=coordList.at(0);
+    Coord second=coordList.at(coordList.size()-1);
+    if(coordfrom.coord==first){//then second is the coord going to
+        coordTo=coordUnordMap_.find(second)->second;
+    }
+    else{
+        coordTo=coordUnordMap_.find(first)->second;
+    }
+    return coordTo;
+}
+
+
+void Datastructures::clearCoorDataMarks()
+{
+    for(auto x:coordUnordMap_){
+        x.second.colour=WHITE;
+        x.second.from=nullptr;
+        x.second.fromWay=NO_WAY;
+        x.second.d=-1;
+    }
+}
+
+void Datastructures::printPath(vector<std::tuple<Coord, WayID, Distance> > &path, const Datastructures::CoordData coordDataFrom, const Datastructures::CoordData coordDataTo)
+{
+    if(coordDataFrom.coord==coordDataTo.from->coord){
+        path.push_back({coordDataTo.from->coord,coordDataTo.from->fromWay,0});
+    }
+    else if(coordDataTo.from==nullptr){
+        path.push_back({NO_COORD,NO_WAY,NO_DISTANCE});
+    }
+    else{
+        printPath(path,coordDataFrom,*coordDataTo.from);
+        path.push_back({coordDataTo.from->coord,coordDataTo.from->fromWay,coordDataTo.from->d});
+}
+}
+
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord fromxy, Coord toxy)
 {
+    CoordData coordDataFrom=coordUnordMap_.find(fromxy)->second;
+    CoordData coordDataTo=coordUnordMap_.find(toxy)->second;
+    if( coordDataFrom.IsCrossroad==false
+     || coordDataTo.IsCrossroad==false){//If either of the coordinates is not a crossroad
+        return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+    }
+    clearCoorDataMarks();
+    vector<std::tuple<Coord, WayID, Distance> > path;
+
+    list<CoordData> queue;
+    coordDataFrom.d=0;
+    coordDataFrom.colour=GRAY;
+    queue.push_back(coordDataFrom);
+    while(!queue.empty()){
+        CoordData recentCoordFrom=queue.front();
+        queue.pop_front();
+        for(WayID way:recentCoordFrom.wayID){
+            CoordData recentCoordTo = coordTo(recentCoordFrom,way);
+            if(recentCoordTo.colour==WHITE){
+                recentCoordTo.colour=GRAY;
+                recentCoordTo.from=&recentCoordFrom;
+                recentCoordTo.d+=calWayDist(way);
+                recentCoordTo.fromWay=way;
+                queue.push_back(recentCoordTo);
+            }
+        }
+        recentCoordFrom.colour=BLACK;
+    }
+
+    //printpath
+    if(coordDataTo.from!=nullptr){
+        path.push_back({coordDataTo.coord,NO_WAY,coordDataTo.d});
+        printPath(path,coordDataFrom,coordDataTo);
+        return path;
+    }
+
+
     // Replace this comment with your implementation
     return {{NO_COORD, NO_WAY, NO_DISTANCE}};
 }
