@@ -549,8 +549,8 @@ bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
             Distance d=calWayDist(id);
             Coord coord1 = coords.front();
             Coord coord2 = coords.back();
-            besideInfo info1; info1.d=d;
-            besideInfo info2; info2.d=d;
+            BesideInfo info1; info1.d=d;
+            BesideInfo info2; info2.d=d;
             //1-part
             if(coordUnordMap_.find(coord1)!=coordUnordMap_.end()){
                 //adding Adj

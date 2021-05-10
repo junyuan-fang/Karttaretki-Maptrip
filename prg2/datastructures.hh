@@ -12,7 +12,6 @@
 #include <unordered_map>
 #include <algorithm>
 #include <memory>
-#include <set>
 #include <queue>
 
 using namespace std;
@@ -287,8 +286,8 @@ private:    //Place
     //phase 2
     struct CoordData;
 
-    struct besideInfo{
-        besideInfo(){
+    struct BesideInfo{
+        BesideInfo(){
             d=-1;
             ptr=nullptr;
         }
@@ -309,7 +308,7 @@ private:    //Place
         }
         Coord coord=NO_COORD;
         /////vector<pair<WayID,Distance>> wayID_Dist={};//
-        unordered_map<WayID, besideInfo> besideInfo={};
+        unordered_map<WayID, BesideInfo> besideInfo={};
         Colour colour=Colour::WHITE;
         CoordData* from=nullptr;
         WayID fromWay=NO_WAY;
@@ -324,7 +323,7 @@ private:    //Place
 
     unordered_map <WayID, vector<Coord>> wayIDUnordMap_;
     unordered_map<Coord, CoordData*, CoordHash> coordUnordMap_;//only crossroad be added
-    typedef unordered_map<WayID, besideInfo>::iterator besideInfoiter ;
+    typedef unordered_map<WayID, BesideInfo>::iterator besideInfoiter ;
 
     // Estimate of performance: theta(n)
     // Short rationale for estimate: for loop
