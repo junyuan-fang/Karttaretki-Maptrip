@@ -374,7 +374,6 @@ void Datastructures::sort3element(vector<Place*>& placeVec,const Coord& xy)
     }   );
 }
 
-
 //********
 //returns Coord xy's closest 3 places(max 3). And places are in order
 //O(n)
@@ -518,53 +517,139 @@ std::vector<WayID> Datastructures::all_ways()
     return WayIDs;
 }
 
+//calculate WayID's length
+//also cover the situation when length is 0
+Distance Datastructures::calWayDist(const WayID id)
+{
+    vector<Coord> coords=wayIDUnordMap_.find(id)->second;
+    Distance dist=0;
+    for (unsigned int i=0; i<coords.size();i++){
+        //calculating distance
+        if(i==0){
+            dist=0;
+        }
+        else{
+            dist+=sqrt(pow((coords.at(i).x-coords.at(i-1).x),2)+pow((coords.at(i).y-coords.at(i-1).y),2));
+        }
+    }
+    //qDebug()<<QString::fromStdString(id)<<" Distance is: "<<dist<<Qt::endl;
+    return dist;
+}
+
+
 //update the wayIDUnordMap_, coordUnordMap_
 bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
 {   
-    if(wayIDUnordMap_.find(id)==wayIDUnordMap_.end()){
+    if(wayIDUnordMap_.find(id) == wayIDUnordMap_.end()){
         //1. add to wayIDUnordMap_
         wayIDUnordMap_.insert({id,coords});
 
         //2. add to coordUnordMap_
-//        Distance dist;
-        for (unsigned int i=0; i<coords.size();i++){
-//            //calculating distance
-//            if(i==0){
-//                dist=0;
+        if(!coords.empty()){
+            Distance d=calWayDist(id);
+            Coord coord1 = coords.front();
+            Coord coord2 = coords.back();
+            besideInfo info1; info1.d=d;
+            besideInfo info2; info2.d=d;
+            //1-part
+            if(coordUnordMap_.find(coord1)!=coordUnordMap_.end()){
+                //adding Adj
+                /////coordUnordMap_.find(coord1)->second->wayID_Dist.push_back( {id,d} );////
+                if(coordUnordMap_.find(coord2)!=coordUnordMap_.end()){//2found, 1found
+                    /////coordUnordMap_.find(coord2)->second->wayID_Dist.push_back( {id,d} );//******************//
+                    //secondptr=&coordUnordMap_.find(new_coord2)->second;//give 2found value// if use this way, need to set secondptr back
+                    info1.ptr=coordUnordMap_.find(coord2)->second;//2found
+                    info2.ptr=coordUnordMap_.find(coord1)->second;//1found
+                    coordUnordMap_.find(coord1)->second->besideInfo.insert( {id,info1} );//1found
+                    coordUnordMap_.find(coord2)->second->besideInfo.insert( {id,info2} );//2found
+                }
+                else{//2-not found, 1found
+                    CoordData* secondptr=new CoordData();
+                    secondptr->coord=coord2;
+                    /////secondptr->wayID_Dist.push_back({id,d});//******************//
+                    info1.ptr=secondptr;//2-not found
+                    info2.ptr=coordUnordMap_.find(coord1)->second;//1found
+                    secondptr->besideInfo.insert({id,info2});//2-not found
+                    coordUnordMap_.find(coord1)->second->besideInfo.insert( {id,info1} );//1found
+                    coordUnordMap_.insert({coord2, secondptr});//2-not found
+                }
+
+            }
+            else{
+                CoordData* firstptr= new CoordData();
+                firstptr->coord=coord1;
+                /////firstptr->wayID_Dist.push_back({id,d});////
+                if(coordUnordMap_.find(coord2)!=coordUnordMap_.end()){//2found, 1not found
+                    /////coordUnordMap_.find(coord2)->second->wayID_Dist.push_back( {id,d} );//******************//
+                    //secondptr=&coordUnordMap_.find(new_coord2)->second;//give 2found value// if use this way, need to set secondptr back
+                    info1.ptr=coordUnordMap_.find(coord2)->second;//2found
+                    info2.ptr=firstptr;//1-not found
+                    firstptr->besideInfo.insert({id,info1});//1-not found
+                    coordUnordMap_.find(coord2)->second->besideInfo.insert( {id,info2} );//2found
+                    coordUnordMap_.insert({coord1, firstptr});//1-not found
+                }
+                else{//2-not found, 1 not found
+                    CoordData* secondptr= new CoordData();
+                    secondptr->coord=coord2;
+                    //////secondptr->wayID_Dist.push_back({id,d});//******************//
+                    info1.ptr=secondptr;//1-not found
+                    info2.ptr=firstptr;//2-not found
+                    firstptr->besideInfo.insert({id,info1});//1-not found
+                    secondptr->besideInfo.insert({id,info2});//2-not found
+                    coordUnordMap_.insert({coord2, secondptr});//2-not found
+                    coordUnordMap_.insert({coord1, firstptr});//1-not found
+                }
+                //////firstptr->besideInfo.insert( {id,info2} );
+                //first->coord=new_coord1;
+                //newcoordData.IsCrossroad=true;
+                ///////coordUnordMap_.insert({coord1,*firstptr});
+            }
+/**
+//            //2-part
+//            if(coordUnordMap_.find(new_coord2)!=coordUnordMap_.end()){
+//                //adding Adj
+//                coordUnordMap_.find(new_coord2)->second.wayID_Dist.push_back( {id,d} );////
+//                //updateBesideInfo(new_coord2,second,info);
+//                if(coordUnordMap_.find(new_coord1)!=coordUnordMap_.end()){//1found
+//                    //firstptr=&coordUnordMap_.find(new_coord1)->second;//give 1found value// if use this way, need to set firstptr back
+//                    info.ptr=&coordUnordMap_.find(new_coord1)->second;//update info
+//                }
+//                else{//1-not found
+//                    info.ptr=firstptr;
+//                }
+//                coordUnordMap_.find(new_coord2)->second.besideInfo.insert( {id,info} );//update2 by giving 1info
+
 //            }
 //            else{
-//                dist+=sqrt(pow((coords.at(i).x-coords.at(i-1).x),2)+pow((coords.at(i).y-coords.at(i-1).y),2));
+//                secondptr->wayID_Dist.push_back({id,d});////
+//                //updateBesideInfo(new_coord2,second,info);
+//                if(coordUnordMap_.find(new_coord1)!=coordUnordMap_.end()){//1found
+//                    //firstptr=&coordUnordMap_.find(new_coord1)->second;//give 1found value// if use this way, need to set firstptr back
+//                    info.ptr=&coordUnordMap_.find(new_coord1)->second;//update info
+//                }
+//                else{//1-not found
+//                    info.ptr=firstptr;
+//                }
+//                secondptr->besideInfo.insert( {id,info} );
+//                //first->coord=new_coord1;
+//                //newcoordData.IsCrossroad=true;
+//                coordUnordMap_.insert({new_coord2,*secondptr});
 //            }
 
 
-            Coord new_coord=coords.at(i);
-            if(coordUnordMap_.find(new_coord)!=coordUnordMap_.end()){
-                //adding Adj
-                if(i==0){
-                    coordUnordMap_.find(new_coord)->second.wayID.push_back(id);
-                }
-                else if(i==coords.size()-1){
-                    coordUnordMap_.find(new_coord)->second.wayID.push_back(id);
-//                    coordUnordMap_.find(new_coord)->second.AdjCrossRoad.push_back({coords.at(0),id,dist});// because now dist is calculated
-//                    coordUnordMap_.find(new_coord)->second.AdjCrossRoad.push_back({coords.at(coords.size()-1),id,dist});
-                }
-
-
-            }
-            else{//if not found
-                CoordData newcoordData;
-                newcoordData.wayID.push_back(id);
-                newcoordData.coord=new_coord;
-                if(i==0 or i==coords.size()-1){
-                    newcoordData.IsCrossroad=true;
-                }
-                //adding Adj
-//                if(i==coords.size()-1){
-//                    newcoordData.AdjCrossRoad.push_back({coords.at(coords.size()-1),id,dist});
-//                    newcoordData.AdjCrossRoad.push_back({coords.at(0),id,dist});
-//                }
-                coordUnordMap_.insert({new_coord,newcoordData});
-            }
+//            //2-part
+//            if(coordUnordMap_.find(new_coord2) != coordUnordMap_.end()){
+//                //adding Adj
+//                coordUnordMap_.find(new_coord2)->second.wayID_Dist.push_back( {id,d} );////
+//            }
+//            else{//if not found
+//                CoordData newcoordData;
+//                newcoordData.wayID_Dist.push_back({id,d});////
+//                newcoordData.coord = new_coord2;
+//                //newcoordData.IsCrossroad=true;
+//                coordUnordMap_.insert( {new_coord2,newcoordData} );
+//            }
+*/
         }
         return true;
     }
@@ -575,32 +660,41 @@ bool Datastructures::add_way(WayID id, std::vector<Coord> coords)
 //perftest ways_from 20 5000 10;30;100;300;1000;3000;10000;30000;100000;300000;1000000
 std::vector<std::pair<WayID, Coord>> Datastructures::ways_from(Coord xy)
 {
+    //qDebug()<<"-1" <<xy.x<<","<<xy.y<<Qt::endl;
     if(coordUnordMap_.find(xy)!=coordUnordMap_.end()){
-        CoordData coordData=coordUnordMap_.find(xy)->second;
-//        if(coordData.wayID.size()==0){
-//            return {{NO_WAY, NO_COORD}};
-//        } never hapen, if coord is found from the coordUnorderMap_
-        if(coordData.IsCrossroad==false){
-            return {};
-        }
-        else{// if is crossroad.
-            vector<pair<WayID,Coord>> queue;
-            for(WayID x : coordData.wayID){//maybe this coord can go to many places
-                Coord second=wayIDUnordMap_.find(x)->second.back();
-                Coord first=wayIDUnordMap_.find(x)->second.front();
-                if(first==xy){
-                    queue.push_back({x,second});
-                }
-                else {
-                    queue.push_back({x,first});
-                }
+        //qDebug()<<"0"<<Qt::endl;
+        CoordData coordData=*coordUnordMap_.find(xy)->second;
 
+        // Have to be crossroad
+        //qDebug()<<"5"<<Qt::endl;
+        vector<pair<WayID,Coord>> queue;
+        for(auto x:coordData.besideInfo){
+            Coord first = coordData.coord;//coord recent
+            Coord second = x.second.ptr->coord;//coord to
+            if(first==xy){
+                queue.push_back({x.first,second});
             }
-            return queue;
+            else {
+                queue.push_back({x.first,first});
+            }
         }
-    }
+/**
+//        for(pair<WayID,Distance> x : coordData.wayID_Dist){//maybe this coord can go to many places
+//            Coord second=wayIDUnordMap_.find(x.first)->second.back();
+//            Coord first=wayIDUnordMap_.find(x.first)->second.front();
+//            if(first==xy){
+//                queue.push_back({x.first,second});
+//            }
+//            else {
+//                queue.push_back({x.first,first});
+//            }
 
+//        }
+*/
+        return queue;
+    }
     return {};
+
 }
 //perftest way_coords 20 5000 10;30;100;300;1000;3000;10000;30000;100000;300000;1000000
 std::vector<Coord> Datastructures::get_way_coords(WayID id)
@@ -614,101 +708,155 @@ std::vector<Coord> Datastructures::get_way_coords(WayID id)
 void Datastructures::clear_ways()
 {
     wayIDUnordMap_.clear();
+    for(auto x: coordUnordMap_){
+       delete x.second;
+    }
     coordUnordMap_.clear();
 }
 
-Distance Datastructures::calWayDist(const WayID id)
-{
-    vector<Coord> coords=wayIDUnordMap_.find(id)->second;
-    Distance dist=NO_DISTANCE;
-    for (unsigned int i=0; i<coords.size();i++){
-        //calculating distance
-        if(i==0){
-            dist=0;
-        }
-        else{
-            dist+=sqrt(pow((coords.at(i).x-coords.at(i-1).x),2)+pow((coords.at(i).y-coords.at(i-1).y),2));
-        }
-    }
-    return dist;
-}
 
-Datastructures::CoordData Datastructures::coordTo(const Datastructures::CoordData coordfrom, WayID wayID)
+/**
+ * @brief return a coord(to). Because theree are only wayId stored in our CoordData
+ * @param recentCoordFrom
+ * @param wayID
+ * @pre recentCoordFrom exist and wayId can be find from the recentCoordFrom
+ * @return coordTo a ptr
+ */
+Datastructures::CoordData* Datastructures::coordTo(const Datastructures::CoordData recentCoordFrom, WayID wayID)
 {
-    CoordData coordTo;
     vector<Coord> coordList=wayIDUnordMap_.find(wayID)->second;
-    Coord first=coordList.at(0);
-    Coord second=coordList.at(coordList.size()-1);
-    if(coordfrom.coord==first){//then second is the coord going to
-        coordTo=coordUnordMap_.find(second)->second;
+    Coord first=coordList.front();
+    Coord second=coordList.back();
+    CoordData* recentCoordTo;
+    if(first==recentCoordFrom.coord){
+        recentCoordTo=coordUnordMap_.find(second)->second;
     }
-    else{
-        coordTo=coordUnordMap_.find(first)->second;
+    else {
+        recentCoordTo=coordUnordMap_.find(first)->second;
     }
-    return coordTo;
+
+    return recentCoordTo;
 }
 
 
 void Datastructures::clearCoorDataMarks()
 {
-    for(auto x:coordUnordMap_){
-        x.second.colour=WHITE;
-        x.second.from=nullptr;
-        x.second.fromWay=NO_WAY;
-        x.second.d=-1;
+    for(auto iter=coordUnordMap_.begin();iter!=coordUnordMap_.end();iter++){
+        iter->second->colour=Colour::WHITE;
+        iter->second->from=nullptr;
+        iter->second->fromWay=NO_WAY;
+        iter->second->d=-1;
     }
 }
 
+//precondition: CoordData need to save node's all data from the former node
+//precondition*:coordDataTo.from can not be nullptr!
+// course side ask the tuple of coord(current), WayID(which is going to), dist(from the origin node)
+//idea of printPath: because at push_back we can use the pointer of "former". So we travel the index of (1-n).
+//                   and always push back (1.former - n.former)'s data to vec. (1.former - n.former)=(0-(n-1))'s data.
+//                    So the last one we need to add by our hand out of the printPath function.
 void Datastructures::printPath(vector<std::tuple<Coord, WayID, Distance> > &path, const Datastructures::CoordData coordDataFrom, const Datastructures::CoordData coordDataTo)
 {
-    if(coordDataFrom.coord==coordDataTo.from->coord){
-        path.push_back({coordDataTo.from->coord,coordDataTo.from->fromWay,0});
+    if(coordDataFrom.coord==coordDataTo.from->coord){//when back to the coord where begin
+        path.push_back({coordDataTo.from->coord,coordDataTo.fromWay,0});
     }
-    else if(coordDataTo.from==nullptr){
-        path.push_back({NO_COORD,NO_WAY,NO_DISTANCE});
-    }
+//    else if(coordDataTo.from==nullptr){//never hapend
+//        path.push_back({NO_COORD,NO_WAY,NO_DISTANCE});
+//    }
+
     else{
         printPath(path,coordDataFrom,*coordDataTo.from);
-        path.push_back({coordDataTo.from->coord,coordDataTo.from->fromWay,coordDataTo.from->d});
-}
+        path.push_back({coordDataTo.from->coord,coordDataTo.fromWay,coordDataTo.from->d});
+    }
 }
 
 
+//perftest route_any 20 5000 10;30;100;300;1000;3000;10000;30000;100000;300000;1000000
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord fromxy, Coord toxy)
 {
-    CoordData coordDataFrom=coordUnordMap_.find(fromxy)->second;
-    CoordData coordDataTo=coordUnordMap_.find(toxy)->second;
-    if( coordDataFrom.IsCrossroad==false
-     || coordDataTo.IsCrossroad==false){//If either of the coordinates is not a crossroad
+
+    if( coordUnordMap_.find(fromxy)==coordUnordMap_.end()
+     || coordUnordMap_.find(toxy)==coordUnordMap_.end()){//If either of the coordinates is not a crossroad
         return {{NO_COORD, NO_WAY, NO_DISTANCE}};
     }
+    CoordData* coordDataFrom=coordUnordMap_.find(fromxy)->second;
+    CoordData* coordDataTo=coordUnordMap_.find(toxy)->second;
     clearCoorDataMarks();
     vector<std::tuple<Coord, WayID, Distance> > path;
 
-    list<CoordData> queue;
-    coordDataFrom.d=0;
-    coordDataFrom.colour=GRAY;
+    list<CoordData*> queue;//ptr
+    coordDataFrom->d=0;
+    coordDataFrom->colour=Colour::GRAY;
     queue.push_back(coordDataFrom);
-    while(!queue.empty()){
-        CoordData recentCoordFrom=queue.front();
+    bool found=false;
+    //bool first=true;//test
+    while(!queue.empty() and !found){
+        CoordData* recentCoordFrom=queue.front();
         queue.pop_front();
-        for(WayID way:recentCoordFrom.wayID){
-            CoordData recentCoordTo = coordTo(recentCoordFrom,way);
-            if(recentCoordTo.colour==WHITE){
-                recentCoordTo.colour=GRAY;
-                recentCoordTo.from=&recentCoordFrom;
-                recentCoordTo.d+=calWayDist(way);
-                recentCoordTo.fromWay=way;
+
+        for(besideInfoiter iter=recentCoordFrom->besideInfo.begin();iter!=recentCoordFrom->besideInfo.end();iter++){//first:wayId, second:besideInfo(struct)
+            //auto besideInfo:recentCoordFrom->besideInfo
+            if(iter->second.d==0){
+                continue;
+            }
+            //find the right node
+            CoordData* recentCoordTo=iter->second.ptr;
+
+            //qDebug()<< recentCoordTo->coord.x<<","<<recentCoordTo->coord.y<<Qt::endl;
+            if(recentCoordTo->colour==Colour::WHITE){
+                recentCoordTo->colour=Colour::GRAY;
+                recentCoordTo->from=recentCoordFrom;
+                recentCoordTo->d=recentCoordFrom->d+iter->second.d;//calWayDist(way.first);
+                recentCoordTo->fromWay=iter->first;
+                //if find
+                if(recentCoordTo->coord==toxy){
+                    found=true;
+                    break;
+                }
                 queue.push_back(recentCoordTo);
             }
         }
-        recentCoordFrom.colour=BLACK;
-    }
+/**
+//        for(pair<WayID,Distance> way:recentCoordFrom.wayID_Dist){
+//            // test
+//            if(way==recentCoordFrom.wayID_Dist.front()){
+//                qDebug()<<"-------------------"<<Qt::endl;
+//                qDebug()<<"from coord: "<<recentCoordFrom.coord.x<<","<<recentCoordFrom.coord.y<<Qt::endl;
 
+//                qDebug()<<"start"<<Qt::endl;
+//            }
+//            qDebug()<<QString::fromStdString(way.first)<<Qt::endl;
+//            if(way==recentCoordFrom.wayID_Dist.back()){
+//                qDebug()<<"end"<<Qt::endl;
+//                qDebug()<<"-------------------"<<Qt::endl;
+//            }
+//            //
+//            if(way.second==0){
+//                continue;
+//            }
+//            //find the right node
+//            CoordData* recentCoordTo=coordTo(recentCoordFrom,way.first);
+
+//            //qDebug()<< recentCoordTo->coord.x<<","<<recentCoordTo->coord.y<<Qt::endl;
+//            if(recentCoordTo->colour==Colour::WHITE){
+//                recentCoordTo->colour=Colour::GRAY;
+//                recentCoordTo->from=&recentCoordFrom;
+//                recentCoordTo->d=recentCoordFrom.d+way.second;//calWayDist(way.first);
+//                recentCoordTo->fromWay=way.first;
+//                //if find
+//                queue.push_back(recentCoordTo);
+//            }
+//            if(recentCoordTo->colour==Colour::BLACK){
+//                qDebug()<<recentCoordFrom.coord.x<<","<<recentCoordFrom.coord.y<<"colour is black"<<Qt::endl;
+//            }
+//        }
+ */
+        recentCoordFrom->colour=Colour::BLACK;
+    }
     //printpath
-    if(coordDataTo.from!=nullptr){
-        path.push_back({coordDataTo.coord,NO_WAY,coordDataTo.d});
-        printPath(path,coordDataFrom,coordDataTo);
+    if(coordDataTo->from!=nullptr){
+        printPath(path,*coordDataFrom,*coordDataTo);// in order 1-(n-1)
+        path.push_back({coordDataTo->coord,NO_WAY,coordDataTo->d});//n
         return path;
     }
 
@@ -719,24 +867,180 @@ std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_any(Coord
 
 bool Datastructures::remove_way(WayID id)
 {
-    // Replace this comment with your implementation
+    if(wayIDUnordMap_.find(id)!=wayIDUnordMap_.end()){
+        //wayIDUnordMap_
+        vector<Coord> vec=wayIDUnordMap_.find(id)->second;
+        wayIDUnordMap_.erase(wayIDUnordMap_.find(id));
+        //coordUnordMap_
+
+        Coord first=vec.front();
+        Coord second=vec.back();
+        if(first==second){
+            CoordData* firstptr=coordUnordMap_.find(first)->second;
+            firstptr->besideInfo.erase(firstptr->besideInfo.find(id));
+            if(firstptr->besideInfo.size()==0){
+                coordUnordMap_.erase(coordUnordMap_.find(first));
+                delete firstptr;
+            }
+        }
+        else{//front and back are different
+            CoordData* firstptr=coordUnordMap_.find(first)->second;
+            CoordData* secondtptr=coordUnordMap_.find(second)->second;
+            firstptr->besideInfo.erase(firstptr->besideInfo.find(id));
+            secondtptr->besideInfo.erase(secondtptr->besideInfo.find(id));
+            if(firstptr->besideInfo.size()==0){
+                coordUnordMap_.erase(coordUnordMap_.find(first));
+                delete firstptr;
+            }
+            if(secondtptr->besideInfo.size()==0){
+                coordUnordMap_.erase(coordUnordMap_.find(second));
+                delete secondtptr;
+            }
+        }
+        return true;
+    }
     return false;
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_least_crossroads(Coord fromxy, Coord toxy)
 {
+    vector<std::tuple<Coord, WayID, Distance> > returnable={{NO_COORD, NO_WAY, NO_DISTANCE}};
+    returnable=route_any(fromxy,toxy);
+    return returnable;
     // Replace this comment with your implementation
-    return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+    //return {{NO_COORD, NO_WAY, NO_DISTANCE}};
 }
 
+
+void Datastructures::printPath(vector<std::tuple<Coord, WayID> > &path, const CoordData coordDataFrom, const CoordData coordDataTo)
+{
+    //qDebug()<<coordDataTo.from->coord.x<<","<<coordDataTo.from->coord.y<<"is"<<QString::fromStdString(coordDataTo.fromWay)<<Qt::endl;
+    if(coordDataTo.from->coord==coordDataFrom.coord){
+        path.push_back({coordDataTo.from->coord,coordDataTo.fromWay});
+    }
+    else {
+        printPath(path,coordDataFrom,*coordDataTo.from);
+        path.push_back({coordDataTo.from->coord,coordDataTo.fromWay});
+    }
+}
+//perftest route_with_cycle 20 5000 10;30;100;300;1000;3000;10000;30000;100000;300000;1000000
 std::vector<std::tuple<Coord, WayID> > Datastructures::route_with_cycle(Coord fromxy)
 {
+    if(coordUnordMap_.find(fromxy)!=coordUnordMap_.end()){
+        clearCoorDataMarks();
+        CoordData* fromptr=coordUnordMap_.find(fromxy)->second;
+        vector<std::tuple<Coord, WayID> > path;
+
+        CoordData* recentFrom;
+        CoordData* recentCoordTo;
+        WayID wayTo;
+
+        vector<CoordData*> queue;//ptr
+        queue.push_back(fromptr);
+        bool found = false;
+        int i =0;
+        while ( !queue.empty() and !found){
+            i++;
+            recentFrom= queue.back();
+            queue.pop_back();
+            if(recentFrom->colour==Colour::WHITE){
+                recentFrom->colour=Colour::GRAY;
+                queue.push_back(recentFrom);
+                for(besideInfoiter iter=recentFrom->besideInfo.begin();iter!=recentFrom->besideInfo.end();iter++){
+                    if(iter->second.d==0){
+                        continue;
+                    }
+                    //find the right node
+                    recentCoordTo=iter->second.ptr;
+                    wayTo=iter->first;
+                    if(recentCoordTo->colour==Colour::WHITE){
+                        //recentCoordTo->d=recentCoordFrom->d+iter->second.d;
+                        recentCoordTo->from=recentFrom;
+                        recentCoordTo->fromWay=wayTo;
+                        queue.push_back(recentCoordTo);
+                    }
+                    else if(recentCoordTo->colour==Colour::GRAY and recentCoordTo->coord!=recentFrom->from->coord){
+                        found=true;
+                        break;
+                        //circle found
+                    }
+                }
+            }
+            else{
+                recentFrom->colour=Colour::BLACK;
+            }
+        }
+        if(found==true){
+            printPath(path,*fromptr,*recentFrom);
+            path.push_back({recentFrom->coord,wayTo});
+            path.push_back({recentCoordTo->coord,NO_WAY});
+            return path;
+        }
+    }
     // Replace this comment with your implementation
-    return {{NO_COORD, NO_WAY}};
+    return {};
 }
 
 std::vector<std::tuple<Coord, WayID, Distance> > Datastructures::route_shortest_distance(Coord fromxy, Coord toxy)
 {
+    if( coordUnordMap_.find(fromxy)==coordUnordMap_.end()
+        || coordUnordMap_.find(toxy)==coordUnordMap_.end()){//If either of the coordinates is not a crossroad
+           return {{NO_COORD, NO_WAY, NO_DISTANCE}};
+       }
+
+
+       CoordData* coordDataFrom=coordUnordMap_.find(fromxy)->second;
+       CoordData* coordDataTo=coordUnordMap_.find(toxy)->second;
+       clearCoorDataMarks();
+       vector<std::tuple<Coord, WayID, Distance> > path;
+
+       //        auto myComp = [](const CoordData* &a, const CoordData* &b)
+       //                      {return a->d > b->d;};//just like reload <, so smaller one goes out from the p_queue first
+
+       //        priority_queue<pair<CoordData*, vector<CoordData*>, decltype(myComp)> queue(myComp);
+        priority_queue<CoordData*, vector<CoordData*>, PQueComCoorD_Ptr> queue;
+
+       coordDataFrom->d=0;
+       coordDataFrom->colour=Colour::GRAY;
+       queue.push(coordDataFrom);
+       while(!queue.empty()){
+           CoordData* recentCoordFrom=queue.top();
+           queue.pop();
+
+           for(besideInfoiter iter=recentCoordFrom->besideInfo.begin();iter!=recentCoordFrom->besideInfo.end();iter++){//first:wayId, second:besideInfo(struct)
+               //auto besideInfo:recentCoordFrom->besideInfo
+               if(iter->second.d==0){
+                   continue;
+               }
+               //find the right node
+               CoordData* recentCoordTo=iter->second.ptr;
+
+               //qDebug()<< recentCoordTo->coord.x<<","<<recentCoordTo->coord.y<<Qt::endl;
+               if(recentCoordTo->colour==Colour::WHITE){
+                   recentCoordTo->colour=Colour::GRAY;
+                   recentCoordTo->from=recentCoordFrom;
+                   recentCoordTo->d=recentCoordFrom->d+iter->second.d;//calWayDist(way.first);
+                   recentCoordTo->fromWay=iter->first;
+                   queue.push(recentCoordTo);
+               }
+               //RELAX
+               if(recentCoordTo->d>recentCoordFrom->d+iter->second.d){
+                   recentCoordTo->from=recentCoordFrom;
+                   recentCoordTo->d=recentCoordFrom->d+iter->second.d;//calWayDist(way.first);
+                   recentCoordTo->fromWay=iter->first;
+               }
+
+
+           }
+           recentCoordFrom->colour=Colour::BLACK;
+       }
+       //printpath
+       if(coordDataTo->from!=nullptr){
+           printPath(path,*coordDataFrom,*coordDataTo);// in order 1-(n-1)
+           path.push_back({coordDataTo->coord,NO_WAY,coordDataTo->d});//n
+           return path;
+        }
+
     // Replace this comment with your implementation
     return {{NO_COORD, NO_WAY, NO_DISTANCE}};
 }

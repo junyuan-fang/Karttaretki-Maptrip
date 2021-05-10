@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <algorithm>
 #include <memory>
+#include <set>
+#include <queue>
 
 using namespace std;
 // Types for IDs
@@ -20,7 +22,7 @@ using AreaID = long long int;
 using Name = std::string;
 using WayID = std::string;
 
-enum Colour{WHITE,GRAY,BLACK};
+enum class Colour{WHITE=0,GRAY,BLACK};
 // Return values for cases where required thing was not found
 PlaceID const NO_PLACE = -1;
 AreaID const NO_AREA = -1;
@@ -183,53 +185,57 @@ public:
     // Short rationale for estimate:because we only used unordered_map's erase()
     bool remove_place(PlaceID id);
 
-    // Estimate of performance: O(n), but perftest's result is theta(1)
-    // Short rationale for estimate: there are one while-loop inside anoter while-loop. it depends what kind of data we have. In worst case first one's and second one's while-loop size will be n-1, if data's size is n.
-    // but our "return" will interupt it, so it will never be (n-1)^2 (except they do not have the common area)
+    // Estimate of performance: O(n+m)
     AreaID common_area_of_subareas(AreaID id1, AreaID id2);
 
-    // Phase 2 operations
+    // Phase 2 operations-----------------------------------------------------
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: theta(n)
+    // Short rationale for estimate: for-loop
     std::vector<WayID> all_ways();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n), on average case: theta(1)
+    // Short rationale for estimate: no for or whileloops, both .insert() and .find() are: O(n), on average case: theta(1).
     bool add_way(WayID id, std::vector<Coord> coords);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: theta(n)
+    // Short rationale for estimate: one for loop. Inside for loop's function is .push_back, which takes O(1).
+    // O(n)=O(n*1)
     std::vector<std::pair<WayID, Coord>> ways_from(Coord xy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n), on average case: theta(1)
+    // Short rationale for estimate:  .find() is used
     std::vector<Coord> get_way_coords(WayID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: theta(n)
+    // Short rationale for estimate: for loop
     void clear_ways();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V+E)
+    // Short rationale for estimate: v describle while loop called vertices, E describle for loop called edges
+    // O(n) if coord is found from the last element. n>=V
     std::vector<std::tuple<Coord, WayID, Distance>> route_any(Coord fromxy, Coord toxy);
 
     // Non-compulsory operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n), on average case: theta(1)
+    // Short rationale for estimate:  .find(), .erase()  are used
     bool remove_way(WayID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V+E)
+    // Short rationale for estimate: v describle while loop called vertices, E describle for loop called edges
+    // O(n) if coord is found from the last element. n>=V
     std::vector<std::tuple<Coord, WayID, Distance>> route_least_crossroads(Coord fromxy, Coord toxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V+E)
+    // Short rationale for estimate: v describle while loop called vertices, E describle for loop called edges
+    // O(n) if id is found from the last element. n>=V
     std::vector<std::tuple<Coord, WayID>> route_with_cycle(Coord fromxy);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V+E)
+    // Short rationale for estimate: v describle while loop called vertices, E describle for loop called edges
+    // O(n) if coord is found from the last element. n>=V
+    // priority_queue is used O(log(n)), but O(n)>O(log(n))
     std::vector<std::tuple<Coord, WayID, Distance>> route_shortest_distance(Coord fromxy, Coord toxy);
 
     // Estimate of performance:
@@ -280,24 +286,61 @@ private:    //Place
 
     //----------------------------------------------------------------------------------------------------------------------------------------
     //phase 2
+    struct CoordData;
+
+    struct besideInfo{
+        besideInfo(){
+            d=-1;
+            ptr=nullptr;
+        }
+
+        Distance d;
+        CoordData* ptr=nullptr;
+    };
+
     struct CoordData {
-        Coord coord;
-        vector<WayID> wayID;
-        bool IsCrossroad=false;//can be empty
-        //vector<tuple<Coord,WayID,Distance> > AdjCrossRoad;
-        Colour colour=WHITE;
+        CoordData(){
+            this->coord=NO_COORD;
+            ////this->wayID_Dist={};
+            this->besideInfo={};
+            this->colour=Colour::WHITE;
+            this->from=nullptr;
+            this->fromWay=NO_WAY;
+            this->d=-1;
+        }
+        Coord coord=NO_COORD;
+        /////vector<pair<WayID,Distance>> wayID_Dist={};//
+        unordered_map<WayID, besideInfo> besideInfo={};
+        Colour colour=Colour::WHITE;
         CoordData* from=nullptr;
-        WayID fromWay;
+        WayID fromWay=NO_WAY;
         Distance d=-1;//infinity
+        //d is to next's distance
+    };
+    struct PQueComCoorD_Ptr{
+     bool operator ()(const CoordData* a, const CoordData* b){
+        return a->d > b->d;    //just like reload <, so smaller one goes out from the p_queue first
+    }
     };
 
     unordered_map <WayID, vector<Coord>> wayIDUnordMap_;
-    unordered_map<Coord, CoordData, CoordHash> coordUnordMap_;
+    unordered_map<Coord, CoordData*, CoordHash> coordUnordMap_;//only crossroad be added
+    typedef unordered_map<WayID, besideInfo>::iterator besideInfoiter ;
 
+    // Estimate of performance: theta(n)
+    // Short rationale for estimate: for loop
     void clearCoorDataMarks();
+    // Estimate of performance: theta(n)
+    // Short rationale for estimate: for loop
     Distance calWayDist(const WayID id);
-    CoordData coordTo(const CoordData coordfrom,WayID wayID);
+    CoordData* coordTo(const CoordData recentCoordFrom,WayID wayID);//not used
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: path is a line
     void printPath(vector<std::tuple<Coord, WayID, Distance> >& path, const CoordData coordDataFrom, const CoordData coordDataTo);
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: path is a line
+    void printPath(vector<std::tuple<Coord, WayID> >& path, const CoordData coordDataFrom, const CoordData coordDataTo);
+
 };
 
 #endif // DATASTRUCTURES_HH
