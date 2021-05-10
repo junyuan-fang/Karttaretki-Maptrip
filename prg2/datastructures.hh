@@ -232,10 +232,9 @@ public:
     // O(n) if id is found from the last element. n>=V
     std::vector<std::tuple<Coord, WayID>> route_with_cycle(Coord fromxy);
 
-    // Estimate of performance: O(V+E)
+    // Estimate of performance: O(Vlog(V)+Elog(E)), or theta(V+E)
     // Short rationale for estimate: v describle while loop called vertices, E describle for loop called edges
-    // O(n) if coord is found from the last element. n>=V
-    // priority_queue is used O(log(n)), but O(n)>O(log(n))
+    // priority_queue is used O(nlog(n)), theta(n), there are .pop() used in while loop, and .push() used in for loop
     std::vector<std::tuple<Coord, WayID, Distance>> route_shortest_distance(Coord fromxy, Coord toxy);
 
     // Estimate of performance:
